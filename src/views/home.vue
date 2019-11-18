@@ -121,7 +121,8 @@ export default {
     isShare() {
       return (
         location.href.indexOf('shareOpenid') !== -1 &&
-        this.getUrlParam('shareOpenid') && this.getUrlParam('shareOpenid') !== this.userInfo.openid
+        this.getUrlParam('shareOpenid') &&
+        this.getUrlParam('shareOpenid') !== this.userInfo.openid
       )
     }
   },
@@ -176,19 +177,21 @@ export default {
     },
     // 获取url中的某个参数（兼容微信）
     getUrlParam(par) {
+      const url = location.search.replace('?', '')
+      // console.log(url);
       const reg = new RegExp('(^|&)' + par + '=([^&]*)(&|$)')
-      // console.log(decodeURIComponent(location.search).match(reg))
+      // console.log(decodeURIComponent(url).match(reg))
       if (
-        !decodeURIComponent(location.search).match(reg) ||
-        !decodeURIComponent(location.search).match(reg)[0]
+        !decodeURIComponent(url).match(reg) ||
+        !decodeURIComponent(url).match(reg)[0]
       ) {
         return ''
       }
       // console.log(decodeURIComponent(location.search).match(reg)[0])
-      return decodeURIComponent(location.search)
+      return decodeURIComponent(url)
         .match(reg)[0]
-        .replace('&shareOpenid=', '')
-        .replace('&', '')
+        .replace(/&/g, '')
+        .replace('shareOpenid=', '')
     },
     // 获取分享者的用户信息
     async getShareUserInfo() {
@@ -321,7 +324,9 @@ export default {
       const bodyHeight = document.body.clientHeight
       let animation = this.$anime({
         targets: boos,
-        translateY: this.isShare ? -(bodyHeight - 160) * 1.5 : -(bodyHeight - 252) * 1.5,
+        translateY: this.isShare
+          ? -(bodyHeight - 160) * 1.5
+          : -(bodyHeight - 252) * 1.5,
         translateX: Math.random() * 10 - 5 + 3 * 15,
         scale: [0.3, 2],
         loop: true,
@@ -332,20 +337,6 @@ export default {
           }
         }
       })
-      // console.log(animation)
-      // .add({
-      //   boos,
-      //   duration: 1000,
-      //   translateY: 0,
-      //   loop: true,
-      //   translateX: 0,
-      //   scale: 1,
-      //   easing: function(el, i, total) {
-      //     return function(t) {
-      //       return Math.pow(Math.cos(t + 1.2 * (i + 2)), total)
-      //     }
-      //   }
-      // })
       setInterval(() => {
         animation.restart()
       }, 30000)
@@ -431,7 +422,6 @@ $boos-size: 110px;
     position: relative;
     overflow: hidden;
     background-size: 10rem;
-    //- height: calc(100% - 80px - 230px);
     .boo {
       width: 100%;
       height: 100%;

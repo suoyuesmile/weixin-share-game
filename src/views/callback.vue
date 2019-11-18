@@ -10,7 +10,7 @@ export default {
     const state = this.$route.query.state
     if (!code || !state) return
     this.$router.replace({
-      name: 'home', 
+      name: 'home',
       params: {
         code: code,
         state: state

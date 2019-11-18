@@ -118,7 +118,7 @@ export default {
         this.showInputBar = false
         this.getDetail()
       } else {
-        Toast.fail('包含敏感词请重新输入')
+        Toast.fail(res.msg)
         this.commentValue = ''
       }
     }

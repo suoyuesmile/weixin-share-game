@@ -67,7 +67,7 @@ export default {
   methods: {
     init() {
       // this.handleSubmit()
-      
+
     },
     // async handleSubmit() {
     //   const token = await login({
