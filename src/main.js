@@ -5,7 +5,6 @@ import store from './store'
 
 // 引入通用scss文件初始化样式
 import '@/assets/styles/index.scss'
-import 'animate'
 // 适应屏幕宽度
 import '@/utils/adapt.js'
 import VueAnime from 'vue-animejs'
@@ -18,7 +17,7 @@ Vue.prototype.toast = Toast
 Vue.config.productionTip = false
 
 new Vue({
-  router,
-  store,
-  render: (h) => h(App)
+    router,
+    store,
+    render: h => h(App)
 }).$mount('#app')

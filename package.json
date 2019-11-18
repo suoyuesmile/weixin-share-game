@@ -5,6 +5,7 @@
   "scripts": {
     "start": "cross-env NODE_ENV=development vue-cli-service serve",
     "mock": "cross-env NODE_ENV=mock vue-cli-service serve",
+    "feature": "cross-env NODE_ENV=feature vue-cli-service build && scp -r /Users/suosmile/www/group/weixin-share-game/dist/* root@192.168.1.114:/usr/share/nginx/html/lagola-weixin-game-dist/",
     "build": "cross-env NODE_ENV=production vue-cli-service build",
     "lint": "vue-cli-service lint"
   },

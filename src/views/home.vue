@@ -4,7 +4,7 @@
     .share-text(v-show="isShowShareMast") 分享给你的好友，了解他们对你的评价
     van-overlay(:show="isShowShareMast" @click="isShowShareMast = false")
     .header
-      .title {{isShare ? '你对'+ userInfo.nickname +'同学有什么要吐槽的吗' : '我收到到匿名评价'}}
+      .title {{isShare ? '你对'+ userInfo.nickname +'同学有什么要评价的吗' : '我收到到匿名评价'}}
     .user-info
       .avatar-wrapper
         .avatar
@@ -17,7 +17,7 @@
         .boo-item(
           v-for="(item, index) in boos"
           :key="index"
-          :style="{'backgroundImage': `url(${require('@/assets/images/boo.png')})`, left: getBoosLeft(index), top: getBoosTop(index)}"
+          :style="{'backgroundImage': `url(${require('@/assets/images/boo.png')})`, left: getBoosLeft(index), bottom: getBoosTop(index)}"
           )
           .boo-item-text {{item.replierAnswer}}
           .boo-item-opt.fix
@@ -62,52 +62,74 @@ import { Field, Button, Popup, Toast, Overlay } from 'vant'
 import VueAnime from 'vue-animejs'
 import wxApi from '@/sdk/weixin'
 import wx from 'weixin-js-sdk'
-Vue.use(VueAnime)
-import { getComments, oAuth, getUserBaseInfo, getCurrentUserBaseInfo, getTags, addComment, agree } from '@/api/index'
+import {
+  getComments,
+  oAuth,
+  getUserBaseInfo,
+  getCurrentUserBaseInfo,
+  getTags,
+  addComment,
+  agree
+} from '@/api/index'
 
 Vue.use(Overlay)
-Vue.use(Toast)
+  .use(Toast)
+  .use(VueAnime)
 
 export default {
   data() {
     return {
-      boos: [],
+      // 是否显示分享bar
       showShareBar: false,
+      // 是否显示分享遮罩和提示
+      isShowShareMast: false,
+      // 分享者的openid
       shareOpenid: '',
+      // 用户信息
       userInfo: {
         nickname: '',
         headimgurl: '',
         openid: ''
       },
+      // 小球数据列表
+      boos: [],
+      // 标签列表
       tags: [],
+      // 评论项目
       commentItem: {
         commentValue: '',
         commentId: ''
       },
+      // 评论表单
       commentsFrom: {
         page: '',
         size: ''
       },
+      // 标签分页
       tagsPager: {
         currentPage: 1,
         totalPage: 1
       },
+      // 评论分页
       commentPager: {
         currentPage: 1,
         totalPage: 1
-      },
-      isShowShareMast: false
+      }
     }
   },
   computed: {
     isShare() {
-      return location.href.indexOf('shareOpenid') !== -1
+      return (
+        location.href.indexOf('shareOpenid') !== -1 &&
+        this.getUrlParam('shareOpenid') && this.getUrlParam('shareOpenid') !== this.userInfo.openid
+      )
     }
   },
   mounted() {
     this.init()
   },
   methods: {
+    // 初始化
     init() {
       this.runingBoos()
       this.authorize()
@@ -152,9 +174,17 @@ export default {
       }
       this.handleShareWechat()
     },
+    // 获取url中的某个参数（兼容微信）
     getUrlParam(par) {
-      // if (!window.location.search) return
-      var reg = new RegExp('(^|&)' + par + '=([^&]*)(&|$)')
+      const reg = new RegExp('(^|&)' + par + '=([^&]*)(&|$)')
+      // console.log(decodeURIComponent(location.search).match(reg))
+      if (
+        !decodeURIComponent(location.search).match(reg) ||
+        !decodeURIComponent(location.search).match(reg)[0]
+      ) {
+        return ''
+      }
+      // console.log(decodeURIComponent(location.search).match(reg)[0])
       return decodeURIComponent(location.search)
         .match(reg)[0]
         .replace('&shareOpenid=', '')
@@ -163,10 +193,12 @@ export default {
     // 获取分享者的用户信息
     async getShareUserInfo() {
       const shareOpenid = this.getUrlParam('shareOpenid')
-      console.log(shareOpenid)
+      // console.log(shareOpenid)
       if (shareOpenid) {
         this.shareOpenid = shareOpenid
-        const shareUserInfo = await getUserBaseInfo({ shareOpenid: shareOpenid })
+        const shareUserInfo = await getUserBaseInfo({
+          shareOpenid: shareOpenid
+        })
         this.userInfo.headimgurl = shareUserInfo.data.headimgurl
         this.userInfo.nickname = shareUserInfo.data.nickname
         localStorage.setItem('headimgurl', shareUserInfo.data.headimgurl)
@@ -184,6 +216,7 @@ export default {
       })
       if (!comments.data.dataList || !comments.data.dataList.length) return
       this.boos = comments.data.dataList
+      this.commentPager.totalPage = comments.data.totalPage
       this.$nextTick(() => {
         this.runingBoos()
       })
@@ -195,12 +228,19 @@ export default {
       if (this.tagsPager.currentPage > this.tagsPager.totalPage) {
         this.tagsPager.currentPage = 1
       }
-      const tagsData = await getTags({ currentPage: this.tagsPager.currentPage, pageSize: 4 })
+      const tagsData = await getTags({
+        currentPage: this.tagsPager.currentPage,
+        pageSize: 4
+      })
       this.tags = tagsData.data.dataList
       this.tagsPager.totalPage = tagsData.data.totalPage
     },
+    // 点赞
     async handleAgree(id) {
-      const res = await agree({ curOpenid: this.userInfo.openid, replierId: id })
+      const res = await agree({
+        curOpenid: this.userInfo.openid,
+        replierId: id
+      })
       if (res.code === '000000') {
         Toast.success('点赞成功')
         this.boos.forEach((item, index) => {
@@ -220,9 +260,10 @@ export default {
     },
     // 计算小球距离右边边距
     getBoosTop(index) {
-      const col = Math.floor(index % 2)
-      const row = Math.floor(index / 3)
-      return this.isShare ? row * 3 - col * 0.2 + 8 + 'rem' : row * 3 - col * 0.2 + 12 + 'rem'
+      // const col = Math.floor(index % 2)
+      // const row = Math.floor(index / 3)
+      return '-1.8rem'
+      // return this.isShare ? row * 3 - col * 0.2 + 8 + 'rem' : row * 3 - col * 0.2 + 12 + 'rem'
     },
     // 刷新小球
     refreshBoos() {
@@ -259,12 +300,13 @@ export default {
     },
     // 分享到朋友
     handleShareWechat() {
-      console.log(location.href, this.userInfo.openid)
+      // console.log(location.href, this.userInfo.openid)
       wxApi.wxRegister(() => {
         wx.onMenuShareAppMessage({
-          title: '撒雕们快来评价我吧',
+          title: '【测试】快来评价我吧',
           desc: '分享给朋友，就可以知道朋友对你印象，快去告诉你朋友',
-          link: window.location.href + '?id=1&shareOpenid=' + this.userInfo.openid,
+          link:
+            window.location.href + '?id=1&shareOpenid=' + this.userInfo.openid,
           imgUrl:
             'https://p1.meituan.net/dpmerchantpic/5397ab35c2997efb4121ab08f0dcb982936404.jpg%40watermark%3D1%26%26r%3D1%26p%3D9%26x%3D2%26y%3D2%26relative%3D1%26o%3D20',
           success: function() {
@@ -276,16 +318,17 @@ export default {
     // 小球运动
     runingBoos() {
       const boos = document.querySelectorAll('div.boo-item')
-      this.$anime({
+      const bodyHeight = document.body.clientHeight
+      let animation = this.$anime({
         targets: boos,
-        translateY: this.isShare ? -500 : -1000,
+        translateY: this.isShare ? -(bodyHeight - 160) * 1.5 : -(bodyHeight - 252) * 1.5,
         translateX: Math.random() * 10 - 5 + 3 * 15,
         scale: [0.3, 2],
         loop: true,
-        duration: 20000,
+        duration: 30000,
         easing: function(el, i, total) {
           return function(t) {
-            return Math.pow(Math.sin(t * (i + 1)), 4)
+            return Math.pow(Math.sin(t * (i + 1) * (10 - total) * 0.5), 4)
           }
         }
       })
@@ -303,9 +346,9 @@ export default {
       //     }
       //   }
       // })
-      // setInterval(() => {
-      //   animation.restart()
-      // }, 200000)
+      setInterval(() => {
+        animation.restart()
+      }, 30000)
     }
   },
   components: { Field, Button, Popup }
@@ -322,7 +365,11 @@ $boos-size: 110px;
   width: 100%;
   height: 100%;
   position: relative;
-  background: linear-gradient(180deg, rgba(93, 81, 208, 1) 0%, rgba(8, 0, 23, 1) 100%);
+  background: linear-gradient(
+    180deg,
+    rgba(93, 81, 208, 1) 0%,
+    rgba(8, 0, 23, 1) 100%
+  );
   .share-arrow {
     position: absolute;
     top: 0;
