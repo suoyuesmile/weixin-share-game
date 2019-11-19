@@ -25,7 +25,20 @@
 <script>
 // import { login } from '@/api/user'
 import Vue from 'vue'
-import { Button, Cell, Popup, Dialog, SubmitBar, Search, Swipe, SwipeItem, Lazyload, NavBar, Tab, Tabs } from 'vant'
+import {
+  Button,
+  Cell,
+  Popup,
+  Dialog,
+  SubmitBar,
+  Search,
+  Swipe,
+  SwipeItem,
+  Lazyload,
+  NavBar,
+  Tab,
+  Tabs
+} from 'vant'
 Vue.use(Tab)
   .use(Tabs)
   .use(NavBar)
@@ -67,7 +80,6 @@ export default {
   methods: {
     init() {
       // this.handleSubmit()
-
     },
     // async handleSubmit() {
     //   const token = await login({

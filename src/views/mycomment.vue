@@ -21,15 +21,17 @@
 import Vue from 'vue'
 import { NavBar, List, Cell } from 'vant'
 import { getMyComments } from '@/api/index'
-
 Vue.use(List)
-Vue.use(NavBar)
-Vue.use(Cell)
+  .use(NavBar)
+  .use(Cell)
 export default {
   data() {
     return {
+      // 评论列表
       list: [],
+      // 加载状态
       loading: false,
+      // 列表完成状态
       finished: false
     }
   },
@@ -38,14 +40,17 @@ export default {
   },
   methods: {
     onClickLeft() {
-      this.$router.replace({ name: 'home', params: { from: 'comment' }, query: { shareOpenid: this.$route.params.shareOpenid } })
+      this.$router.replace({
+        name: 'home',
+        params: { from: 'comment' },
+        query: { shareOpenid: this.$route.params.shareOpenid }
+      })
     },
     async getMyComment() {
       const openid = localStorage.getItem('openid')
       const comments = await getMyComments({ shareOpenid: openid })
       this.finished = true
       this.loading = false
-      console.log(comments)
       if (!comments.data || !comments.data.length) return
       this.list = comments.data
     }

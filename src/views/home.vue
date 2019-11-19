@@ -178,16 +178,13 @@ export default {
     // 获取url中的某个参数（兼容微信）
     getUrlParam(par) {
       const url = location.search.replace('?', '')
-      // console.log(url);
       const reg = new RegExp('(^|&)' + par + '=([^&]*)(&|$)')
-      // console.log(decodeURIComponent(url).match(reg))
       if (
         !decodeURIComponent(url).match(reg) ||
         !decodeURIComponent(url).match(reg)[0]
       ) {
         return ''
       }
-      // console.log(decodeURIComponent(location.search).match(reg)[0])
       return decodeURIComponent(url)
         .match(reg)[0]
         .replace(/&/g, '')
@@ -196,7 +193,6 @@ export default {
     // 获取分享者的用户信息
     async getShareUserInfo() {
       const shareOpenid = this.getUrlParam('shareOpenid')
-      // console.log(shareOpenid)
       if (shareOpenid) {
         this.shareOpenid = shareOpenid
         const shareUserInfo = await getUserBaseInfo({
