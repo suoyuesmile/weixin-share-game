@@ -16,22 +16,40 @@ const wxApi = {
   wxRegister(callback) {
     let data = { url: window.location.href }
     sign(data)
-      .then((res) => {
+      .then(res => {
         wx.config({
           debug: false, // 开启调试模式
           appId: res.data.appId, // 必填，公众号的唯一标识
           timestamp: res.data.timestamp, // 必填，生成签名的时间戳
           nonceStr: res.data.nonceStr, // 必填，生成签名的随机串
           signature: res.data.signature, // 必填，签名，见附录1
-          jsApiList: ['updateAppMessageShareData', 'updateTimelineShareData', 'onMenuShareAppMessage']
+          jsApiList: [
+            'updateAppMessageShareData',
+            'updateTimelineShareData',
+            'onMenuShareAppMessage',
+            'hideMenuItems'
+          ]
         })
-        wx.ready((res) => {
+        wx.ready(res => {
+          console.log(res)
+          wx.hideMenuItems({
+            menuList: [
+              'menuItem:share:qq',
+              'menuItem:share:weiboApp',
+              'menuItem:share:facebook',
+              'menuItem:share:QZone',
+              'menuItem:openWithQQBrowser',
+              'menuItem:openWithSafari',
+              'menuItem:originPage',
+              'menuItem:share:email'
+            ]
+          })
           if (callback) {
             callback()
           }
         })
       })
-      .catch((error) => {
+      .catch(error => {
         console.log(error)
       })
   },

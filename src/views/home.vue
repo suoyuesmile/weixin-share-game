@@ -17,7 +17,7 @@
         .boo-item(
           v-for="(item, index) in boos"
           :key="index"
-          :style="{'backgroundImage': `url(${require('@/assets/images/boo.png')})`, left: getBoosLeft(index), bottom: getBoosTop(index)}"
+          :style="{'backgroundImage': `url(${require('@/assets/images/boo.png')})`, left: item.left, bottom: getBoosTop(index)}"
           )
           .boo-item-text {{item.replierAnswer}}
           .boo-item-opt.fix
@@ -219,7 +219,11 @@ export default {
       })
       if (!comments.data.dataList || !comments.data.dataList.length) return
       this.boos = comments.data.dataList
+      this.boos.forEach((item, index) => {
+        this.boos[index].left = Math.random() * 8 - 4 + 3 + 'rem'
+      })
       this.commentPager.totalPage = comments.data.totalPage
+
       this.$nextTick(() => {
         this.runingBoos()
       })
@@ -245,28 +249,32 @@ export default {
         replierId: id
       })
       if (res.code === '000000') {
+        this.setBoosX()
         Toast.success('点赞成功')
-        this.boos.forEach((item, index) => {
-          if (item.id === id) {
-            this.boos[index].agreeCount = this.boos[index].agreeCount + 1
-          }
-        })
       } else {
         Toast.fail(res.msg)
       }
     },
     // 计算小球距离左边边距
-    getBoosLeft(index) {
-      // const col = Math.floor(index % 3)
-      // return col * 3 + 0.5 + col * 0.2 - 0.6 + 'rem'
-      return Math.random() * 10 - 5 + 3 + 'rem'
-    },
+    // getBoosLeft(index) {
+    // const col = Math.floor(index % 3)
+    // return col * 3 + 0.5 + col * 0.2 - 0.6 + 'rem'
+    // return Math.random() * 10 - 5 + 3 + 'rem'
+    // },
     // 计算小球距离右边边距
     getBoosTop(index) {
       // const col = Math.floor(index % 2)
       // const row = Math.floor(index / 3)
       return '-1.8rem'
       // return this.isShare ? row * 3 - col * 0.2 + 8 + 'rem' : row * 3 - col * 0.2 + 12 + 'rem'
+    },
+    // 随机刷新小球x轴
+    setBoosX() {
+      this.boos.forEach((item, index) => {
+        if (item.id === id) {
+          this.boos[index].agreeCount = this.boos[index].agreeCount + 1
+        }
+      })
     },
     // 刷新小球
     refreshBoos() {
@@ -281,12 +289,25 @@ export default {
       this.isShowShareMast = true
     },
     // 选择标签
-    handleSelectTags(item) {
-      this.commentItem.commentValue = item.label
-      this.commentItem.commentId = item.id
+    async handleSelectTags(item) {
+      const res = await addComment({
+        shareOpenid: this.shareOpenid ? this.shareOpenid : this.userInfo.openid,
+        curOpenid: this.userInfo.openid,
+        labelId: item.id,
+        replierAnswer: item.label
+      })
+      if (res.code !== '000000') {
+        res.msg && Toast.fail(res.msg)
+      } else {
+        Toast.success('评论成功')
+        this.getCommentsData()
+      }
     },
     // 提交评论
     async handleSubmitComment() {
+      if (!this.commentItem.commentValue) {
+        Toast('输入内容为空!')
+      }
       const res = await addComment({
         shareOpenid: this.shareOpenid ? this.shareOpenid : this.userInfo.openid,
         curOpenid: this.userInfo.openid,
@@ -303,7 +324,6 @@ export default {
     },
     // 分享到朋友
     handleShareWechat() {
-      // console.log(location.href, this.userInfo.openid)
       wxApi.wxRegister(() => {
         wx.onMenuShareAppMessage({
           title: '【测试】快来评价我吧',
@@ -333,12 +353,13 @@ export default {
         duration: 30000,
         easing: function(el, i, total) {
           return function(t) {
-            return Math.pow(Math.sin(t * (i + 1) * (10 - total) * 0.5), 4)
+            return Math.pow(Math.sin(t * (i + 0.8) * (10 - total) * 0.2), 4)
           }
         }
       })
       setInterval(() => {
         animation.restart()
+        this.setBoosX()
       }, 30000)
     }
   },
