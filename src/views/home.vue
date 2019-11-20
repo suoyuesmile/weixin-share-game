@@ -11,8 +11,24 @@
           img.avatar-img(:src="userInfo.headimgurl || require('@/assets/images/avatar.png')")
           div.avatar-text {{userInfo.nickname}}
         img.share-btn(:src="require('@/assets/images/share.png')" @click="handleShowShareBar")
-        img.switch-btn(:src="require('@/assets/images/refresh.png')" @click="refreshBoos")
-    .content(:style="{'backgroundImage': `url(${require('@/assets/images/home_bg.png')})`, height: isShare ? 'calc(100% - 310px)' : 'calc(100% - 160px)'}")
+        //- img.switch-btn(:src="require('@/assets/images/refresh.png')" @click="refreshBoos")
+    .content(:style="{'backgroundImage': `url(${require('@/assets/images/home_bg.png')})`, height: isShare ? 'calc(100% - 360px)' : 'calc(100% - 210px)'}")
+      #boos.boo.fix
+        .boo-item(v-if="!boos.length && !isShare"
+          v-for="(item, index) in boosShare"
+          :key="index"
+          @click="handleShowShareBar"
+          :style="{'backgroundImage': `url(${require('@/assets/images/boo.png')})`, left: Math.random() * 8 - 4 + 3 + 'rem', bottom: getBoosTop(index)}"
+          )
+            .boo-item-text {{item.label}}
+      #boos.boo.fix
+        .boo-item(v-if="!boos.length && isShare"
+          v-for="(item, index) in boosShare"
+          :key="index"
+          @click="handleShowShareBar"
+          :style="{'backgroundImage': `url(${require('@/assets/images/boo.png')})`, left: Math.random() * 8 - 4 + 3 + 'rem', bottom: getBoosTop(index)}"
+          )
+            .boo-item-text {{item.label}}
       #boos.boo.fix
         .boo-item(
           v-for="(item, index) in boos"
@@ -34,9 +50,11 @@
       .tags-comment.fix
         .tags-comment-item(v-for="(item, index) in tags" :key="index" @click="handleSelectTags(item)") {{item.label || '你是一个大傻瓜'}}
         Button.switch(@click="getTagsData") 换一换
+      Button.view-comment(@click="$router.replace({name: 'mycomment', params: {shareOpenid: shareOpenid}})") 查看他收到的评价
       Button.view-comment(@click="handleShowShareBar") 我也要玩
     .bottom-mine.bottom(v-else)
       Button.view-comment(@click="$router.replace({name: 'mycomment', params: {shareOpenid: shareOpenid}})") 查看我收到的评价
+      Button.view-comment(@click="handleShowShareBar") 分享给好友
     Popup.share-bar(v-model="showShareBar" position="bottom" :style="{height: '179px'}")
       .share
         .share-item
@@ -100,6 +118,59 @@ export default {
         commentValue: '',
         commentId: ''
       },
+      // 评论分享文案
+      boosShare: [
+        {
+          label: '还没有人给你评价'
+        },
+        {
+          label: '分享一下'
+        },
+        {
+          label: '点击气泡开始匿名游戏'
+        },
+        {
+          label: '开始游戏'
+        },
+        {
+          label: '你是谁'
+        },
+        {
+          label: '我在他们心中印象怎样'
+        },
+        {
+          label: '我很靠谱吗'
+        },
+        {
+          label: '快分享给他们吧'
+        }
+      ],
+      boosOtherShare: [
+        {
+          label: '还没有人给他评价'
+        },
+        {
+          label: '分享一下'
+        },
+        {
+          label: '点击气泡开始匿名游戏'
+        },
+        {
+          label: '开始游戏'
+        },
+        {
+          label: '他是谁'
+        },
+        {
+          label: '他在你心中印象怎样'
+        },
+        {
+          label: '他很靠谱吗'
+        },
+        {
+          label: '快分享给朋友吧'
+        }
+      ],
       // 评论表单
       commentsFrom: {
         page: '',
@@ -215,11 +286,8 @@ export default {
       })
       if (!comments.data.dataList || !comments.data.dataList.length) return
       this.boos = comments.data.dataList
-      this.boos.forEach((item, index) => {
-        this.boos[index].left = Math.random() * 8 - 4 + 3 + 'rem'
-      })
+      this.setBoosX()
       this.commentPager.totalPage = comments.data.totalPage
-
       this.$nextTick(() => {
         this.runingBoos()
       })
@@ -245,7 +313,12 @@ export default {
         replierId: id
       })
       if (res.code === '000000') {
-        this.setBoosX()
+        this.boos.forEach((item, index) => {
+          if (item.id === id) {
+            this.boos[index].selfIfThumbs = true
+            this.boos[index].agreeCount = this.boos[index].agreeCount + 1
+          }
+        })
         Toast.success('点赞成功')
       } else {
         Toast.fail(res.msg)
@@ -267,9 +340,7 @@ export default {
     // 随机刷新小球x轴
     setBoosX() {
       this.boos.forEach((item, index) => {
-        if (item.id === id) {
-          this.boos[index].agreeCount = this.boos[index].agreeCount + 1
-        }
+        this.boos[index].left = Math.random() * 8 - 4 + 3 + 'rem'
       })
     },
     // 刷新小球
@@ -341,22 +412,25 @@ export default {
       let animation = this.$anime({
         targets: boos,
         translateY: this.isShare
-          ? -(bodyHeight - 160) * 1.5
-          : -(bodyHeight - 252) * 1.5,
+          ? -(bodyHeight - 210) * 1.5
+          : -(bodyHeight - 300) * 1.5,
         translateX: Math.random() * 10 - 5 + 3 * 15,
         scale: [0.3, 2],
+        delay: function(el, i) {
+          return 3000 * (i - 1)
+        },
         loop: true,
-        duration: 30000,
+        duration: 120000,
         easing: function(el, i, total) {
           return function(t) {
-            return Math.pow(Math.sin(t * (i + 0.8) * (10 - total) * 0.2), 4)
+            return Math.pow(Math.sin(t * 8), 4)
           }
         }
       })
       setInterval(() => {
         animation.restart()
         this.setBoosX()
-      }, 30000)
+      }, 120000)
     }
   },
   components: { Field, Button, Popup }
@@ -494,11 +568,12 @@ $boos-size: 110px;
   }
   .bottom-mine {
     position: fixed;
-    height: 50px;
+    height: 100px;
     padding: 10px 20px 0 20px;
-    bottom: 20px;
+    bottom: 10px;
     .view-comment {
-      margin: 10px;
+      margin: 5px;
+      margin-top: 3px;
       width: 325px;
       height: 36px;
       line-height: 36px;
@@ -510,9 +585,9 @@ $boos-size: 110px;
   }
   .bottom-share {
     position: fixed;
-    height: 200px;
+    height: 250px;
     padding: 10px 20px 0 20px;
-    bottom: 20px;
+    bottom: 10px;
     .input {
       height: 50px;
       &-content {
@@ -588,7 +663,7 @@ $boos-size: 110px;
       }
     }
     .view-comment {
-      margin: 10px;
+      margin: 5px;
       width: 325px;
       height: 36px;
       line-height: 36px;

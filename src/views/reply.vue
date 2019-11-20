@@ -8,10 +8,11 @@
       .content-text(@click="showAddCommentBar('content')") # {{commentLabel}}
       .content-opt
         .content-opt-good
-          img.content-opt-good-img(:src="require('@/assets/images/icon_good.png')")
-          .content-opt-good-text {{agreeCount || 0}}
+          img.content-opt-good-img(:src="require(booItem.selfIfThumbs ? '@/assets/images/icon_good.png' : '@/assets/images/icon_good_not.png')"
+          @click="handleAgree(booItem.id)")
+          .content-opt-good-text {{booItem.agreeCount || 0}}
         .content-opt-comment
-          img.content-opt-comment-img(:src="require('@/assets/images/icon_repay.png')")
+          img.content-opt-comment-img(:src="require('@/assets/images/icon_repay.png')" @click="showAddCommentBar('content')")
           .content-opt-comment-text {{replyCount || 0}}
     .comment
       .comment-item(
@@ -54,7 +55,7 @@ import {
   CellGroup,
   Toast
 } from 'vant'
-import { getCommentsDetail, reply } from '@/api/index'
+import { getCommentsDetail, reply, agree } from '@/api/index'
 Vue.use(Divider)
   .use(Field)
   .use(CellGroup)
@@ -90,7 +91,9 @@ export default {
         parentId: '',
         replierAnswer: '',
         replierId: ''
-      }
+      },
+      // 当前小球信息
+      booItem: {}
     }
   },
   mounted() {
@@ -100,6 +103,7 @@ export default {
     // 页面参数加载初始化
     init() {
       this.commentLabel = this.$route.params.booItem.replierAnswer
+      this.booItem = this.$route.params.booItem
       this.curOpenid = this.$route.params.openid
       this.replyForm.curOpenid = this.$route.params.openid
       this.getDetail()
@@ -111,6 +115,20 @@ export default {
         params: { from: 'comment' },
         query: { shareOpenid: this.$route.params.shareOpenid }
       })
+    },
+    // 点赞
+    async handleAgree(id) {
+      const res = await agree({
+        curOpenid: this.curOpenid,
+        replierId: id
+      })
+      if (res.code === '000000') {
+        this.booItem.agreeCount = this.booItem.agreeCount + 1
+        this.booItem.selfIfThumbs = true
+        Toast.success('点赞成功')
+      } else {
+        Toast.fail(res.msg)
+      }
     },
     // 获取详细数据
     async getDetail() {
@@ -151,6 +169,7 @@ export default {
       }
       this.showInputBar = true
     },
+    // 关闭弹窗触发
     onInputPopopClose() {
       this.commentValue = ''
     }

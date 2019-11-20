@@ -1,7 +1,7 @@
 <template lang="pug">
   div.mycomment
     van-nav-bar.nav(
-      title="我的评论项"
+      title="全部评论"
       left-arrow
       @click-left="onClickLeft")
     van-list.comment(
@@ -48,7 +48,11 @@ export default {
     },
     async getMyComment() {
       const openid = localStorage.getItem('openid')
-      const comments = await getMyComments({ shareOpenid: openid })
+      const comments = await getMyComments({
+        shareOpenid: this.$route.params.shareOpenid
+          ? this.$route.params.shareOpenid
+          : openid
+      })
       this.finished = true
       this.loading = false
       if (!comments.data || !comments.data.length) return
