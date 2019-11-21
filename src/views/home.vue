@@ -13,6 +13,15 @@
         img.share-btn(:src="require('@/assets/images/share.png')" @click="handleShowShareBar")
         //- img.switch-btn(:src="require('@/assets/images/refresh.png')" @click="refreshBoos")
     .content(:style="{'backgroundImage': `url(${require('@/assets/images/home_bg.png')})`, height: isShare ? 'calc(100% - 360px)' : 'calc(100% - 210px)'}")
+      wordcloud(
+        :data="defaultWords"
+        :wordRotate="wordRotate"
+        :fontSize="wordFont"
+        nameKey="name"
+        spiral="rectangular"
+        valueKey="value"
+        :color="myColors"
+        :showTooltip="false")
       #boos.boo.fix
         .boo-item(v-if="!boos.length && !isShare"
           v-for="(item, index) in boosShare"
@@ -77,6 +86,7 @@
 <script>
 import Vue from 'vue'
 import { Field, Button, Popup, Toast, Overlay } from 'vant'
+import wordcloud from 'vue-wordcloud'
 import VueAnime from 'vue-animejs'
 import wxApi from '@/sdk/weixin'
 import wx from 'weixin-js-sdk'
@@ -86,6 +96,7 @@ import {
   getUserBaseInfo,
   getCurrentUserBaseInfo,
   getTags,
+  getParentTags,
   addComment,
   agree
 } from '@/api/index'
@@ -118,6 +129,14 @@ export default {
         commentValue: '',
         commentId: ''
       },
+      wordRotate: {
+        from: 0,
+        to: 30,
+        numOfOrientation: 15
+      },
+      wordFont: [12, 18],
+      // 加载骨架屏
+      skeletonLoading: true,
       // 评论分享文案
       boosShare: [
         {
@@ -185,7 +204,9 @@ export default {
       commentPager: {
         currentPage: 1,
         totalPage: 1
-      }
+      },
+      myColors: ['#FF8148', '#FF8AAA', '#8ADDFF', '#D48AFF'],
+      defaultWords: []
     }
   },
   computed: {
@@ -275,6 +296,7 @@ export default {
         localStorage.setItem('nickname', shareUserInfo.data.nickname)
       }
       this.getCommentsData()
+      this.getParentTagsData()
     },
     // 获取评论数据
     async getCommentsData() {
@@ -289,6 +311,7 @@ export default {
       this.setBoosX()
       this.commentPager.totalPage = comments.data.totalPage
       this.$nextTick(() => {
+        this.skeletonLoading = false
         this.runingBoos()
       })
     },
@@ -301,10 +324,25 @@ export default {
       }
       const tagsData = await getTags({
         currentPage: this.tagsPager.currentPage,
-        pageSize: 4
+        pageSize: 6
       })
       this.tags = tagsData.data.dataList
       this.tagsPager.totalPage = tagsData.data.totalPage
+    },
+    // 获取父标签数据
+    async getParentTagsData() {
+      const parentTagsData = await getParentTags({
+        shareOpenid: this.shareOpenid ? this.shareOpenid : this.userInfo.openid,
+        curOpenid: this.userInfo.openid
+      })
+      if (parentTagsData.code === '000000') {
+        this.defaultWords = parentTagsData.data.map((item, index) => {
+          return {
+            name: item,
+            value: index
+          }
+        })
+      }
     },
     // 点赞
     async handleAgree(id) {
@@ -433,7 +471,7 @@ export default {
       }, 120000)
     }
   },
-  components: { Field, Button, Popup }
+  components: { Field, Button, Popup, wordcloud }
 }
 </script>
 <style lang="scss">
@@ -513,6 +551,22 @@ $boos-size: 110px;
     position: relative;
     overflow: hidden;
     background-size: 10rem;
+    .wordCloud {
+      animation: 7.5s ease-in 1s both running fade;
+      @keyframes fade {
+        from {
+          opacity: 1;
+          filter: alpha(opacity=100);
+          // transform: scaleX(1);
+        }
+        to {
+          opacity: 0;
+          filter: alpha(opacity=0);
+          // display: none;
+          // transform: scaleX(0);
+        }
+      }
+    }
     .boo {
       width: 100%;
       height: 100%;
