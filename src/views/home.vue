@@ -14,11 +14,11 @@
         //- img.switch-btn(:src="require('@/assets/images/refresh.png')" @click="refreshBoos")
     .content(:style="{'backgroundImage': `url(${require('@/assets/images/home_bg.png')})`, height: isShare ? 'calc(100% - 360px)' : 'calc(100% - 210px)'}")
       wordcloud(
+        :style="{height: isShare ? 'calc(100% - 20px)' : 'calc(100% - 20px)'}"
         :data="defaultWords"
         :wordRotate="wordRotate"
         :fontSize="wordFont"
         nameKey="name"
-        spiral="rectangular"
         valueKey="value"
         :color="myColors"
         :showTooltip="false")
@@ -42,7 +42,7 @@
         .boo-item(
           v-for="(item, index) in boos"
           :key="index"
-          :style="{'backgroundImage': `url(${require('@/assets/images/boo.png')})`, left: item.left, bottom: getBoosTop(index)}"
+          :style="{'backgroundImage': `url(${require('@/assets/images/boo.png')})`, left: item.left, bottom: getBoosTop(index), transform: `translateY(${item.translateY})`}"
           )
           .boo-item-text {{item.replierAnswer}}
           .boo-item-opt.fix
@@ -134,7 +134,7 @@ export default {
         to: 30,
         numOfOrientation: 15
       },
-      wordFont: [12, 18],
+      wordFont: [10, 20],
       // 加载骨架屏
       skeletonLoading: true,
       // 评论分享文案
@@ -205,8 +205,9 @@ export default {
         currentPage: 1,
         totalPage: 1
       },
+      animation: null,
       myColors: ['#FF8148', '#FF8AAA', '#8ADDFF', '#D48AFF'],
-      defaultWords: []
+      defaultWords: [],
     }
   },
   computed: {
@@ -224,7 +225,7 @@ export default {
   methods: {
     // 初始化
     init() {
-      this.runingBoos()
+      // this.runingBoos()
       this.authorize()
       this.getTagsData()
     },
@@ -295,11 +296,11 @@ export default {
         localStorage.setItem('headimgurl', shareUserInfo.data.headimgurl)
         localStorage.setItem('nickname', shareUserInfo.data.nickname)
       }
-      this.getCommentsData()
+      this.getCommentsData(true)
       this.getParentTagsData()
     },
     // 获取评论数据
-    async getCommentsData() {
+    async getCommentsData(reset) {
       const comments = await getComments({
         shareOpenid: this.shareOpenid ? this.shareOpenid : this.userInfo.openid,
         curOpenid: this.userInfo.openid,
@@ -308,9 +309,9 @@ export default {
       })
       if (!comments.data.dataList || !comments.data.dataList.length) return
       this.boos = comments.data.dataList
-      this.setBoosX()
       this.commentPager.totalPage = comments.data.totalPage
-      this.$nextTick(() => {
+      this.setBoosX()
+      this.$nextTick((reset) => {
         this.skeletonLoading = false
         this.runingBoos()
       })
@@ -342,6 +343,7 @@ export default {
             value: index
           }
         })
+        console.log(this.defaultWords)
       }
     },
     // 点赞
@@ -377,8 +379,15 @@ export default {
     },
     // 随机刷新小球x轴
     setBoosX() {
+      // const boos = document.querySelectorAll('div.boo-item')
+      // boos.style.trasform = "translateY(0)"
       this.boos.forEach((item, index) => {
         this.boos[index].left = Math.random() * 8 - 4 + 3 + 'rem'
+        this.boos[index].translateY = 0
+        if (this.animation) {
+          this.animation.restart()
+        }
+        // console.log(this.booyfs[index].transform)
       })
     },
     // 刷新小球
@@ -387,7 +396,7 @@ export default {
       if (this.commentPager.currentPage > this.commentPager.totalPage) {
         this.commentPager.currentPage = 1
       }
-      this.getCommentsData()
+      this.getCommentsData(true)
     },
     // 打开分享栏
     handleShowShareBar() {
@@ -405,7 +414,7 @@ export default {
         res.msg && Toast.fail(res.msg)
       } else {
         Toast.success('评论成功')
-        this.getCommentsData()
+        this.getCommentsData(false)
       }
     },
     // 提交评论
@@ -447,7 +456,7 @@ export default {
     runingBoos() {
       const boos = document.querySelectorAll('div.boo-item')
       const bodyHeight = document.body.clientHeight
-      let animation = this.$anime({
+      this.animation = this.$anime({
         targets: boos,
         translateY: this.isShare
           ? -(bodyHeight - 210) * 1.5
@@ -466,7 +475,7 @@ export default {
         }
       })
       setInterval(() => {
-        animation.restart()
+        this.animation.restart()
         this.setBoosX()
       }, 120000)
     }
@@ -552,20 +561,22 @@ $boos-size: 110px;
     overflow: hidden;
     background-size: 10rem;
     .wordCloud {
+      position: absolute;
       animation: 7.5s ease-in 1s both running fade;
+      // z-index: -1;
       @keyframes fade {
         from {
           opacity: 1;
           filter: alpha(opacity=100);
-          // transform: scaleX(1);
         }
         to {
           opacity: 0;
           filter: alpha(opacity=0);
-          // display: none;
-          // transform: scaleX(0);
         }
       }
+    }
+    .tooltip {
+      display: none;
     }
     .boo {
       width: 100%;

@@ -1,6 +1,6 @@
 import axios from 'axios'
 import { baseURL } from '../../.env.js'
-import Vue from 'vue'
+// import Vue from 'vue'
 // import { getToken, removeToken, ssoLogin } from './sso'
 
 // axios 配置
@@ -30,7 +30,7 @@ axios.interceptors.response.use(
   },
   error => {
     // console.log(error)
-    Vue.toast.fail(error)
+    // Vue.toast.fail(error)
     return Promise.reject(error)
   }
 )
