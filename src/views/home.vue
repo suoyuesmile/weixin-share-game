@@ -11,7 +11,6 @@
           img.avatar-img(:src="userInfo.headimgurl || require('@/assets/images/avatar.png')")
           div.avatar-text {{userInfo.nickname}}
         img.share-btn(:src="require('@/assets/images/share.png')" @click="handleShowShareBar")
-        //- img.switch-btn(:src="require('@/assets/images/refresh.png')" @click="refreshBoos")
     .content(:style="{'backgroundImage': `url(${require('@/assets/images/home_bg.png')})`, height: isShare ? 'calc(100% - 360px)' : 'calc(100% - 210px)'}")
       wordcloud(
         :style="{height: isShare ? 'calc(100% - 20px)' : 'calc(100% - 20px)'}"
@@ -225,7 +224,6 @@ export default {
   methods: {
     // 初始化
     init() {
-      // this.runingBoos()
       this.authorize()
       this.getTagsData()
     },
@@ -343,7 +341,6 @@ export default {
             value: index
           }
         })
-        console.log(this.defaultWords)
       }
     },
     // 点赞
@@ -364,30 +361,18 @@ export default {
         Toast.fail(res.msg)
       }
     },
-    // 计算小球距离左边边距
-    // getBoosLeft(index) {
-    // const col = Math.floor(index % 3)
-    // return col * 3 + 0.5 + col * 0.2 - 0.6 + 'rem'
-    // return Math.random() * 10 - 5 + 3 + 'rem'
-    // },
-    // 计算小球距离右边边距
+    // 计算小球距离右边边距（暂时不需要）
     getBoosTop(index) {
-      // const col = Math.floor(index % 2)
-      // const row = Math.floor(index / 3)
       return '-1.8rem'
-      // return this.isShare ? row * 3 - col * 0.2 + 8 + 'rem' : row * 3 - col * 0.2 + 12 + 'rem'
     },
     // 随机刷新小球x轴
     setBoosX() {
-      // const boos = document.querySelectorAll('div.boo-item')
-      // boos.style.trasform = "translateY(0)"
       this.boos.forEach((item, index) => {
         this.boos[index].left = Math.random() * 8 - 4 + 3 + 'rem'
         this.boos[index].translateY = 0
         if (this.animation) {
           this.animation.restart()
         }
-        // console.log(this.booyfs[index].transform)
       })
     },
     // 刷新小球
